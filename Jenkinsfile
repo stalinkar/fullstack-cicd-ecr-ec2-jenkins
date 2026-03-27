@@ -6,7 +6,7 @@ pipeline {
         AWS_ACCOUNT_ID    = '640168426521'
         ECR_FRONTEND_REPO = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/frontend-app"
         ECR_BACKEND_REPO  = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/backend-app"
-        EC2_HOST          = '100.53.60.170'
+        EC2_HOST          = '54.91.61.46'
         EC2_USER          = 'ec2-user'
         DEPLOY_DIR        = '/opt/fullstack-app'
     }
