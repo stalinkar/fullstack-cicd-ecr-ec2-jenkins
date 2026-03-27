@@ -29,16 +29,16 @@ pipeline {
             }
         }
 
-        stage('Clean up old images and containers') {
-            steps {
-                sh "cd deploy"
-                sh "docker-compose down"
-                sh "cd .."
-                sh "docker image prune -f"
-                sh "docker container prune -f"
-                sh "docker image rmi -f ${FULL_IMAGE_NAME} || true"
-            }
-        } 
+        // stage('Clean up old images and containers') {
+        //     steps {
+        //         sh "cd deploy"
+        //         sh "docker-compose down"
+        //         sh "cd .."
+        //         sh "docker image prune -f"
+        //         sh "docker container prune -f"
+        //         sh "docker image rmi -f ${FULL_IMAGE_NAME} || true"
+        //     }
+        // } 
 
         stage('Build Docker Images') {
             steps {
