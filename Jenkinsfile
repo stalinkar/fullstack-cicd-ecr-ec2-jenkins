@@ -29,6 +29,15 @@ pipeline {
             }
         }
 
+        stage('Clean up old images and containers') {
+            steps {
+                sh "docker-compose down"
+                sh "docker image prune -f"
+                sh "docker container prune -f"
+                sh "docker image rmi -f ${FULL_IMAGE_NAME} || true"
+            }
+        } 
+
         stage('Build Docker Images') {
             steps {
                 sh "pwd"
