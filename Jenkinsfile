@@ -3,13 +3,18 @@ pipeline {
     triggers {
         pollSCM('H/2 * * * *')   // every 2 minutes
     }
+    // environment {
+    //     REGISTRY = '640168426521.dkr.ecr.us-east-1.amazonaws.com'  // e.g., '123456789.dkr.ecr.us-east-1.amazonaws.com' for ECR
+    //     // IMAGE_NAME_FRONT = 'frontend-app'
+    //     // IMAGE_NAME_BACK = 'backend-app'
+    //     // TAG = "${BUILD_NUMBER}"
+    //     // FULL_IMAGE_NAME = "${REGISTRY}/${IMAGE_NAME}:${TAG}"
+    // }
     environment {
-        REGISTRY = '640168426521.dkr.ecr.us-east-1.amazonaws.com'  // e.g., '123456789.dkr.ecr.us-east-1.amazonaws.com' for ECR
-        // IMAGE_NAME_FRONT = 'frontend-app'
-        // IMAGE_NAME_BACK = 'backend-app'
-        // TAG = "${BUILD_NUMBER}"
-        // FULL_IMAGE_NAME = "${REGISTRY}/${IMAGE_NAME}:${TAG}"
+    ECR_FRONTEND_REPO = '640168426521.dkr.ecr.us-east-1.amazonaws.com/frontend-app'
+    ECR_BACKEND_REPO  = '640168426521.dkr.ecr.us-east-1.amazonaws.com/backend-app'
     }
+}
 
     stages {
         stage('Clone Repository') {
@@ -37,8 +42,10 @@ pipeline {
         // } 
         stage('Build Docker Images') {
             steps {
-                sh 'docker build -t ${REGISTRY}/frontend-app:v1 .'
-                sh 'docker build -t ${REGISTRY}/backend-app:v1 ./backend'
+                sh """
+                    docker build -t ${ECR_FRONTEND_REPO}:latest -t ${ECR_FRONTEND_REPO}:${_NUMBER} ./frontend
+                    docker build -t ${ECR_BACKEND_REPO}:latest -t ${ECR_BACKEND_REPO}:${BUILD_NUMBER} ./backend
+                """
             }
         }
         stage('Push Images') {
