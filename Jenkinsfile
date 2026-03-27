@@ -14,7 +14,6 @@ pipeline {
     ECR_FRONTEND_REPO = '640168426521.dkr.ecr.us-east-1.amazonaws.com/frontend-app'
     ECR_BACKEND_REPO  = '640168426521.dkr.ecr.us-east-1.amazonaws.com/backend-app'
     }
-}
 
     stages {
         stage('Clone Repository') {
