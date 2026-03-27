@@ -1,6 +1,8 @@
 pipeline {
     agent { label 'docker' }
-
+    triggers {
+            pollSCM('H/2 * * * *')   // every 2 minutes
+        }
     environment {
         AWS_REGION        = 'us-east-1'
         AWS_ACCOUNT_ID    = '640168426521'
