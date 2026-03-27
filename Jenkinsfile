@@ -35,20 +35,6 @@ pipeline {
             }
         }
 
-        // stage('ECR Login') {
-        //     steps {
-        //         withCredentials([[
-        //             $class: 'AmazonWebServicesCredentialsBinding',
-        //             credentialsId: 'aws-ecr-creds'
-        //         ]]) {
-        //             sh '''
-        //                 aws ecr get-login-password --region ${AWS_REGION} | \
-        //                 docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-        //             '''
-        //         }
-        //     }
-        // }
-
         stage('Push Images') {
             steps {
                 sh """
@@ -63,17 +49,9 @@ pipeline {
             }
         }
 
-        // stage('Image Push') {
-        //     steps {
-        //         sh "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${REGISTRY}"
-        //         sh "docker tag pythonapp:v1 ${FULL_IMAGE_NAME}"
-        //         sh "docker push ${FULL_IMAGE_NAME}"
-        //     }
-        // }
-
         stage('Deploy to EC2') {
             steps {
-                sshagent(credentials: ['ec2-ssh-key']) {
+                sshagent(credentials: ['vm-creds']) {
                     sh """
                         scp -o StrictHostKeyChecking=no deploy/docker-compose.yml ${EC2_USER}@${EC2_HOST}:${DEPLOY_DIR}/docker-compose.yml
 
