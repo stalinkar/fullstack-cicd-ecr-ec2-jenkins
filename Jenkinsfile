@@ -53,7 +53,7 @@ pipeline {
             steps {
                 sshagent(credentials: ['vm-creds']) {
                     sh """
-                        scp -o StrictHostKeyChecking=no deploy/docker-compose.yml ${EC2_USER}@${EC2_HOST}:${DEPLOY_DIR}/docker-compose.yml
+                        scp -o StrictHostKeyChecking=no docker-compose.yml ${EC2_USER}@${EC2_HOST}:${DEPLOY_DIR}/docker-compose.yml
 
                         ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} '
                             aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com &&
