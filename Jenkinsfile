@@ -1,20 +1,35 @@
 pipeline {
-    agent any
+    agent { label 'docker' }
+    triggers {
+        pollSCM('H/2 * * * *')   // every 2 minutes
+    }
 
     stages {
-        stage('Initialize') {
+        stage('Clone Repository') {
             steps {
-                echo 'Initializing pipeline...'
+                    git branch: 'main',
+                    url: 'git@github.com:stalinkar/fullstack-cicd-ecr-ec2-jenkins.git',
+                    credentialsId: 'github-creds'
             }
         }
-        stage('Build') {
+        stage('Check the docker cli') {
             steps {
-                echo 'Building the application...'
+                sh "sudo docker --version"
+                sh "sudo docker ps -a"
+                sh "docker-compose --version"
             }
         }
-        stage('Test') {
+        stage('Docker build') {
             steps {
-                echo 'Running unit tests...'
+                echo "Docker build running"
+                sh "sudo docker build . -t pythonapp:v1"
+            }
+        }
+
+        stage('Docker Container Cerateion') {
+            steps {
+                echo "Running docker-compose here..."
+                sh "docker-compose up -d"
             }
         }
         stage('Deploy') {

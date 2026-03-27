@@ -14,7 +14,7 @@ yarn-error.log*
 
 # Build output
 dist/
-build/
+# build/
 
 # OS / Editor files
 .DS_Store
