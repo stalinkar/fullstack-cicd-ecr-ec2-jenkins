@@ -1,18 +1,14 @@
 pipeline {
     agent { label 'docker' }
-    triggers {
-        pollSCM('H/2 * * * *')   // every 2 minutes
-    }
-    // environment {
-    //     REGISTRY = '640168426521.dkr.ecr.us-east-1.amazonaws.com'  // e.g., '123456789.dkr.ecr.us-east-1.amazonaws.com' for ECR
-    //     // IMAGE_NAME_FRONT = 'frontend-app'
-    //     // IMAGE_NAME_BACK = 'backend-app'
-    //     // TAG = "${BUILD_NUMBER}"
-    //     // FULL_IMAGE_NAME = "${REGISTRY}/${IMAGE_NAME}:${TAG}"
-    // }
+
     environment {
-    ECR_FRONTEND_REPO = '640168426521.dkr.ecr.us-east-1.amazonaws.com/frontend-app'
-    ECR_BACKEND_REPO  = '640168426521.dkr.ecr.us-east-1.amazonaws.com/backend-app'
+        AWS_REGION        = 'us-east-1'
+        AWS_ACCOUNT_ID    = '640168426521'
+        ECR_FRONTEND_REPO = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/frontend-app"
+        ECR_BACKEND_REPO  = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/backend-app"
+        EC2_HOST          = '100.53.60.170'
+        EC2_USER          = 'ec2-user'
+        DEPLOY_DIR        = '/opt/fullstack-app'
     }
 
     stages {
@@ -31,50 +27,78 @@ pipeline {
             }
         }
 
-        //  stage('Clean up old images and containers') {
-        //     steps {
-        //         sh "docker-compose down"
-        //         sh "docker image prune -f"
-        //         sh "docker container prune -f"
-        //         sh "docker image rmi -f ${FULL_IMAGE_NAME} || true"
-        //     }
-        // } 
         stage('Build Docker Images') {
             steps {
                 sh """
-                    docker build -t ${ECR_FRONTEND_REPO}:latest -t ${ECR_FRONTEND_REPO}:${_NUMBER} ./frontend
+                    docker build -t ${ECR_FRONTEND_REPO}:latest -t ${ECR_FRONTEND_REPO}:${BUILD_NUMBER} ./frontend
                     docker build -t ${ECR_BACKEND_REPO}:latest -t ${ECR_BACKEND_REPO}:${BUILD_NUMBER} ./backend
                 """
             }
         }
+
+        // stage('ECR Login') {
+        //     steps {
+        //         withCredentials([[
+        //             $class: 'AmazonWebServicesCredentialsBinding',
+        //             credentialsId: 'aws-ecr-creds'
+        //         ]]) {
+        //             sh '''
+        //                 aws ecr get-login-password --region ${AWS_REGION} | \
+        //                 docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+        //             '''
+        //         }
+        //     }
+        // }
+
         stage('Push Images') {
             steps {
-                sh 'docker push ${REGISTRY}/frontend-app:v1'
-                sh 'docker push ${REGISTRY}/backend-app:v1'
-            }
-        }
-        stage('Deploy to EC2') {
-            steps {
-                sh '''
-                ssh ec2-user@<ec2-ip> "
-                docker pull ${REGISTRY}/frontend-app:v1 &&
-                docker pull ${REGISTRY}/backend-app:v1 &&
-                docker-compose up -d
-                "
-                '''
+                sh """
+                    aws ecr get-login-password --region us-east-1 | \
+                    docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+                    docker push ${ECR_FRONTEND_REPO}:latest
+                    docker push ${ECR_FRONTEND_REPO}:${BUILD_NUMBER}
+
+                    docker push ${ECR_BACKEND_REPO}:latest
+                    docker push ${ECR_BACKEND_REPO}:${BUILD_NUMBER}
+                """
             }
         }
 
-        stage('Deploy') {
+        // stage('Image Push') {
+        //     steps {
+        //         sh "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${REGISTRY}"
+        //         sh "docker tag pythonapp:v1 ${FULL_IMAGE_NAME}"
+        //         sh "docker push ${FULL_IMAGE_NAME}"
+        //     }
+        // }
+
+        stage('Deploy to EC2') {
             steps {
-                echo 'Deploying to staging environment...'
+                sshagent(credentials: ['ec2-ssh-key']) {
+                    sh """
+                        scp -o StrictHostKeyChecking=no deploy/docker-compose.yml ${EC2_USER}@${EC2_HOST}:${DEPLOY_DIR}/docker-compose.yml
+
+                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} '
+                            aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com &&
+                            export FRONTEND_IMAGE=${ECR_FRONTEND_REPO}:${BUILD_NUMBER} &&
+                            export BACKEND_IMAGE=${ECR_BACKEND_REPO}:${BUILD_NUMBER} &&
+                            cd ${DEPLOY_DIR} &&
+                            docker compose down || true &&
+                            docker compose pull &&
+                            docker compose up -d
+                        '
+                    """
+                }
             }
         }
     }
-    
+
     post {
-        always {
-            echo 'Pipeline finished.'
+        success {
+            echo 'Pipeline completed successfully.'
+        }
+        failure {
+            echo 'Pipeline failed. Check stage logs.'
         }
     }
 }
