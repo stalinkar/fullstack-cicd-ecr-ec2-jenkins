@@ -54,6 +54,8 @@ pipeline {
         stage('Deploy to EC2') {
             steps {
                 sshagent(credentials: ['vm-creds']) {
+                    sh "sudo mkdir -p /opt/fullstack-app"
+                    sh "sudo chown -R ec2-user:ec2-user /opt/fullstack-app"
                     sh """
                         scp -o StrictHostKeyChecking=no docker-compose.yml ${EC2_USER}@${EC2_HOST}:${DEPLOY_DIR}/docker-compose.yml
 
