@@ -3,6 +3,13 @@ pipeline {
     triggers {
         pollSCM('H/2 * * * *')   // every 2 minutes
     }
+    environment {
+        REGISTRY = '640168426521.dkr.ecr.us-east-1.amazonaws.com'  // e.g., '123456789.dkr.ecr.us-east-1.amazonaws.com' for ECR
+        // IMAGE_NAME_FRONT = 'frontend-app'
+        // IMAGE_NAME_BACK = 'backend-app'
+        // TAG = "${BUILD_NUMBER}"
+        // FULL_IMAGE_NAME = "${REGISTRY}/${IMAGE_NAME}:${TAG}"
+    }
 
     stages {
         stage('Clone Repository') {
@@ -12,26 +19,46 @@ pipeline {
                     credentialsId: 'github-creds'
             }
         }
-        stage('Check the docker cli') {
+         stage('Check the docker cli') {
             steps {
-                sh "sudo docker --version"
-                sh "sudo docker ps -a"
-                sh "docker-compose --version"
-            }
-        }
-        stage('Docker build') {
-            steps {
-                echo "Docker build running"
-                sh "sudo docker build . -t pythonapp:v1"
+            sh "docker --version"
+            sh "docker ps -a"
+            sh "docker-compose --version"
             }
         }
 
-        stage('Docker Container Cerateion') {
+        //  stage('Clean up old images and containers') {
+        //     steps {
+        //         sh "docker-compose down"
+        //         sh "docker image prune -f"
+        //         sh "docker container prune -f"
+        //         sh "docker image rmi -f ${FULL_IMAGE_NAME} || true"
+        //     }
+        // } 
+        stage('Build Docker Images') {
             steps {
-                echo "Running docker-compose here..."
-                sh "docker-compose up -d"
+                sh 'docker build -t ${REGISTRY}/frontend-app:v1 .'
+                sh 'docker build -t ${REGISTRY}/backend-app:v1 ./backend'
             }
         }
+        stage('Push Images') {
+            steps {
+                sh 'docker push ${REGISTRY}/frontend-app:v1'
+                sh 'docker push ${REGISTRY}/backend-app:v1'
+            }
+        }
+        stage('Deploy to EC2') {
+            steps {
+                sh '''
+                ssh ec2-user@<ec2-ip> "
+                docker pull ${REGISTRY}/frontend-app:v1 &&
+                docker pull ${REGISTRY}/backend-app:v1 &&
+                docker-compose up -d
+                "
+                '''
+            }
+        }
+
         stage('Deploy') {
             steps {
                 echo 'Deploying to staging environment...'
