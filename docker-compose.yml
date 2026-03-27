@@ -1,15 +1,16 @@
 version: '3.8'
 
 services:
-  backend:
-    image: backend-app:1.0
-    container_name: backend-container
-    ports:
-      - "8080:8080"
-    restart: always
   frontend:
-    image: frontend-app:1.0
+    image: ${FRONTEND_IMAGE}
     container_name: frontend-container
     ports:
+      - "8080:8080"
+    depends_on:
+      - backend
+
+  backend:
+    image: ${BACKEND_IMAGE}
+    container_name: backend-container
+    ports:
       - "80:80"
-    restart: always
