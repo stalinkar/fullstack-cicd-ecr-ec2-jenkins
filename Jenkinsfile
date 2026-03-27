@@ -29,11 +29,9 @@ pipeline {
 
         stage('Build Docker Images') {
             steps {
-                sh """
-                    pwd
-                    docker build -t ${ECR_FRONTEND_REPO}:latest -t ${ECR_FRONTEND_REPO}:${BUILD_NUMBER} ./frontend
-                    docker build -t ${ECR_BACKEND_REPO}:latest -t ${ECR_BACKEND_REPO}:${BUILD_NUMBER} ./backend
-                """
+                sh "pwd"
+                sh "docker build -t ${ECR_FRONTEND_REPO}:latest -t ${ECR_FRONTEND_REPO}:${BUILD_NUMBER} ./frontend"
+                sh "docker build -t ${ECR_BACKEND_REPO}:latest -t ${ECR_BACKEND_REPO}:${BUILD_NUMBER} ./backend"
             }
         }
 
