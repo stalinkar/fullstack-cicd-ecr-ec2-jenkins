@@ -64,9 +64,9 @@ pipeline {
                             export FRONTEND_IMAGE=${ECR_FRONTEND_REPO}:${BUILD_NUMBER} &&
                             export BACKEND_IMAGE=${ECR_BACKEND_REPO}:${BUILD_NUMBER} &&
                             cd ${DEPLOY_DIR} &&
-                            docker compose down || true &&
-                            docker compose pull &&
-                            docker compose up -d
+                            docker-compose down || true &&
+                            docker-compose pull &&
+                            docker-compose up -d
                         '
                     """
                 }
