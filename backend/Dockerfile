@@ -2,7 +2,7 @@ FROM amazoncorretto:17-alpine
 
 WORKDIR /app
 
-COPY build/backend-app-0.0.1-SNAPSHOT.jar app.jar
+COPY backend/build/backend-app-0.0.1-SNAPSHOT.jar app.jar
 
 EXPOSE 8080
 
