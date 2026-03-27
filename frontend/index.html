@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS Docker Lab Frontend</title>
+</head>
+<body>
+    <h1>Frontend UI</h1>
+    <button onclick="fetchData()">Get Message</button>
+    <p id="output"></p>
+
+    <script>
+        function fetchData() {
+            fetch('/api/message')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('output').innerText = data;
+                })
+                .catch(error => {
+                    document.getElementById('output').innerText = 'Error: ' + error;
+                });
+        }
+    </script>
+</body>
+</html>
